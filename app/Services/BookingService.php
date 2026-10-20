@@ -52,6 +52,14 @@ class BookingService
         [$booking, $customer] = DB::transaction(function () use (
             $tenant, $service, $staff, $localStart, $customerData, $notes, $phone
         ): array {
+            // Serialize writes for this tenant. Locking the tenant row (not
+            // just the staff rows) also protects the two other race-prone
+            // writes in this transaction: the per-tenant booking-code
+            // uniqueness check and firstOrCreate() on customers
+            // (tenant_id, phone). SQLite ignores row locks and serializes
+            // writers at the file level instead.
+            Tenant::query()->whereKey($tenant->getKey())->lockForUpdate()->first();
+
             $initial = $this->findSlot($tenant, $service, $staff, $localStart);
 
             if ($initial === null) {

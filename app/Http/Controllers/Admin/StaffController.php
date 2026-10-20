@@ -10,6 +10,7 @@ use App\Services\TenantContext;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 
@@ -26,7 +27,7 @@ class StaffController extends Controller
             'staff' => Staff::query()
                 ->with(['services:id,name', 'schedules'])
                 ->orderBy('name')
-                ->get(),
+                ->paginate(100),
             'services' => Service::query()->orderBy('name')->get(),
         ]);
     }
@@ -86,12 +87,19 @@ class StaffController extends Controller
      */
     private function validated(Request $request): array
     {
+        $tenantId = $this->context->requireTenant()->getKey();
+
         $data = $request->validate([
             'name' => ['required', 'string', 'max:120'],
             'phone' => ['nullable', 'string', 'max:20'],
             'is_active' => ['nullable', 'boolean'],
             'service_ids' => ['nullable', 'array'],
-            'service_ids.*' => ['integer'],
+            // Reject a service id owned by another tenant; the pivot itself
+            // carries no tenant_id, so this is the boundary that keeps it clean.
+            'service_ids.*' => [
+                'integer',
+                Rule::exists('services', 'id')->where('tenant_id', $tenantId),
+            ],
             'shifts' => ['nullable', 'array'],
         ]);
 
@@ -101,7 +109,11 @@ class StaffController extends Controller
                 'phone' => $data['phone'] ?? null,
                 'is_active' => $request->boolean('is_active'),
             ],
-            'service_ids' => array_map('intval', $request->input('service_ids', [])),
+            'service_ids' => Service::query()
+                ->whereIn('id', array_map('intval', $request->input('service_ids', [])))
+                ->pluck('id')
+                ->map(fn ($id): int => (int) $id)
+                ->all(),
             'shifts' => $this->parseShifts($request->input('shifts', [])),
         ];
     }

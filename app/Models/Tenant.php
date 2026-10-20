@@ -57,7 +57,13 @@ class Tenant extends Model
 
     public function timezone(): string
     {
-        return $this->timezone ?: 'Asia/Tehran';
+        $timezone = $this->timezone ?: 'Asia/Tehran';
+
+        // A bad value in the database must not take a tenant's page down with
+        // an InvalidTimeZoneException; fall back to the documented default.
+        return in_array($timezone, timezone_identifiers_list(), true)
+            ? $timezone
+            : 'Asia/Tehran';
     }
 
     public function setting(string $key, mixed $default = null): mixed

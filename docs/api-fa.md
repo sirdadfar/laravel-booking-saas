@@ -62,12 +62,15 @@ curl -s -X POST "http://localhost:8000/rose/bookings" \
 
 | کد | معنی |
 | --- | --- |
+| `403` | کاربر وارد شده به این مستأجر یا به پنل پلتفرم دسترسی ندارد |
 | `404` | مستأجر، خدمت، متخصص یا نوبت پیدا نشد (یا به این مستأجر تعلق ندارد) |
 | `409` | زمان انتخاب‌شده هم‌زمان توسط دیگری گرفته شد (`code: slot_unavailable`) |
+| `419` | توکن CSRF منقضی یا نامعتبر است (صفحهٔ فارسی `errors/419`) |
 | `422` | اعتبارسنجی ورودی یا نقض قاعدهٔ رزرو (`code: booking_rule_violation`) |
 | `429` | عبور از محدودیت نرخ |
+| `500` | خطای پیش‌بینی‌نشده؛ بدون جزئیات استثنا و stack trace |
 
-بدنهٔ خطای JSON:
+پاسخ‌های HTML خطا از صفحه‌های فارسی `resources/views/errors/` می‌آیند. بدنهٔ خطای JSON:
 
 ```json
 {
@@ -76,12 +79,40 @@ curl -s -X POST "http://localhost:8000/rose/bookings" \
 }
 ```
 
+پاسخ ۴۲۹ برای درخواست‌هایی که `Accept: application/json` دارند همان بدنهٔ JSON را با پیام
+محدودیت نرخ برمی‌گرداند؛ در غیر این صورت صفحهٔ `errors/429` نمایش داده می‌شود.
+
 ## محدودیت نرخ
 
 | مسیر | سقف |
 | --- | --- |
+| `POST /login` | ۵ در دقیقه به ازای `sha1(lower(email))` + IP |
 | `POST /{tenant}/bookings` | ۱۰ درخواست در دقیقه برای هر IP |
 | `GET /{tenant}/slots` | ۶۰ درخواست در دقیقه برای هر IP |
+| `GET /{tenant}/bookings/{code}` | ۶۰ درخواست در دقیقه برای هر IP |
+| `POST /{tenant}/bookings/{code}/cancel` | ۱۰ درخواست در دقیقه برای هر IP |
+
+محدودیت ورود عمداً بر اساس ایمیل + IP است تا تلاش برای چند حساب از یک IP هم سهمیهٔ جدا
+نداشته باشد؛ تغییر حرف بزرگ/کوچک ایمیل سبد تازه نمی‌سازد.
+
+## سرصفحه‌های امنیتی
+
+هر پاسخ گروه `web` این سرصفحه‌ها را دارد:
+
+- `X-Content-Type-Options: nosniff`
+- `X-Frame-Options: DENY`
+- `Referrer-Policy: strict-origin-when-cross-origin`
+- `Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=(), usb=()`
+- `Content-Security-Policy-Report-Only` (سیاست گزارش‌محور، بدون enforcement)
+- `Strict-Transport-Security` فقط روی درخواست TLS
+
+`X-Powered-By` حذف می‌شود. اگر پشت پروکسی معکوس هستید، برای تشخیص درست HTTPS باید
+`TrustProxies` را تنظیم کنید تا HSTS و کوکی `Secure` فعال شوند.
+
+## صفحه‌بندی فهرست‌های مدیریت
+
+فهرست نوبت‌ها، خدمات، تیم و کسب‌وکارهای پلتفرم ۱۰۰ ردیف در هر صفحه برمی‌گردانند. پارامتر
+`page` استاندارد لاراول است و فیلترهای فعلی (`date`, `status`) در لینک‌های صفحه حفظ می‌شوند.
 
 ## مسیرهای پنل (نیازمند ورود)
 

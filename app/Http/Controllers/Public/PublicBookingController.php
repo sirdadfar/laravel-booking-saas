@@ -103,7 +103,9 @@ class PublicBookingController extends Controller
 
         $startsAt = CarbonImmutable::createFromFormat('Y-m-d H:i', $data['starts_at'], $tenant->timezone());
 
-        if ($startsAt === false) {
+        // createFromFormat() rolls invalid dates over (2026-02-31 -> March 3)
+        // instead of returning false, so compare the round-trip as well.
+        if ($startsAt === false || $startsAt->format('Y-m-d H:i') !== $data['starts_at']) {
             throw ValidationException::withMessages(['starts_at' => 'زمان انتخاب‌شده معتبر نیست.']);
         }
 

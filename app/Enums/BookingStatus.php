@@ -21,10 +21,15 @@ enum BookingStatus: string
         };
     }
 
+    /**
+     * CSS modifier for the shared `.badge` component in `public/css/app.css`.
+     * Keep this in sync with the stylesheet: an unknown modifier silently
+     * renders an unstyled badge (this is covered by BookingStatusBadgeTest).
+     */
     public function badgeClass(): string
     {
         return match ($this) {
-            self::Pending => 'badge-warning',
+            self::Pending => 'badge-warn',
             self::Confirmed => 'badge-success',
             self::Cancelled => 'badge-muted',
             self::Completed => 'badge-info',

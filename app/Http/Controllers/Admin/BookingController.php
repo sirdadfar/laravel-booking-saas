@@ -45,7 +45,9 @@ class BookingController extends Controller
 
         return view('admin.bookings', [
             'tenant' => $tenant,
-            'bookings' => $query->get(),
+            // A single day can still hold a lot of rows; cap the page and keep
+            // the date/status filters in the pagination links.
+            'bookings' => $query->paginate(100)->withQueryString(),
             'date' => $date->toDateString(),
             'status' => $data['status'] ?? null,
             'statuses' => BookingStatus::cases(),

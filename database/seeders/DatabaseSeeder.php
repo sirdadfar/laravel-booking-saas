@@ -65,7 +65,6 @@ class DatabaseSeeder extends Seeder
             'name' => 'مدیر آرایشگاه رز',
             'email' => 'admin@rose.test',
             'password' => 'password',
-            'is_platform_admin' => false,
         ]);
 
         User::query()->create([
@@ -73,16 +72,16 @@ class DatabaseSeeder extends Seeder
             'name' => 'مدیر کلینیک مهر',
             'email' => 'admin@mehr.test',
             'password' => 'password',
-            'is_platform_admin' => false,
         ]);
 
-        User::query()->create([
+        // The privilege flag is not mass-assignable; grant it explicitly.
+        $platform = User::query()->create([
             'tenant_id' => null,
             'name' => 'مدیر پلتفرم',
             'email' => 'admin@nobatyar.test',
             'password' => 'password',
-            'is_platform_admin' => true,
         ]);
+        $platform->forceFill(['is_platform_admin' => true])->save();
     }
 
     private function seedRose(Tenant $tenant): void

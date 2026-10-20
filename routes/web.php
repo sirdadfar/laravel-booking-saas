@@ -17,7 +17,9 @@ use Illuminate\Support\Facades\Route;
 Route::get('/', HomeController::class)->middleware('tenant')->name('home');
 
 Route::get('/login', [LoginController::class, 'show'])->name('login');
-Route::post('/login', [LoginController::class, 'store'])->name('login.store');
+Route::post('/login', [LoginController::class, 'store'])
+    ->middleware('throttle:login')
+    ->name('login.store');
 Route::post('/logout', [LoginController::class, 'destroy'])->middleware('auth')->name('logout');
 
 /*
@@ -67,6 +69,11 @@ Route::prefix('{tenant}')
         Route::post('/bookings', [PublicBookingController::class, 'store'])
             ->middleware('throttle:10,1')
             ->name('bookings.store');
-        Route::get('/bookings/{code}', [PublicBookingController::class, 'confirmation'])->name('confirmation');
-        Route::post('/bookings/{code}/cancel', [PublicBookingController::class, 'cancel'])->name('cancel');
+        Route::get('/bookings/{code}', [PublicBookingController::class, 'confirmation'])
+            ->middleware('throttle:60,1')
+            ->name('confirmation');
+        // The booking code is the only credential on this route; cap guesses.
+        Route::post('/bookings/{code}/cancel', [PublicBookingController::class, 'cancel'])
+            ->middleware('throttle:10,1')
+            ->name('cancel');
     });

@@ -12,12 +12,16 @@ class User extends Authenticatable
     /** @use HasFactory<UserFactory> */
     use HasFactory, Notifiable;
 
+    /**
+     * `is_platform_admin` is deliberately NOT fillable: it is a privilege
+     * flag and must never be settable through request mass assignment.
+     * Factories run unguarded; the seeder sets it explicitly via forceFill().
+     */
     protected $fillable = [
         'tenant_id',
         'name',
         'email',
         'password',
-        'is_platform_admin',
     ];
 
     protected $hidden = [

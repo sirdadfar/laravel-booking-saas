@@ -8,6 +8,7 @@ use App\Models\Staff;
 use App\Services\TenantContext;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
 class ServiceController extends Controller
@@ -24,7 +25,7 @@ class ServiceController extends Controller
                 ->withCount('bookings')
                 ->with('staff:id,name')
                 ->orderBy('name')
-                ->get(),
+                ->paginate(100),
             'staff' => Staff::query()->active()->orderBy('name')->get(),
         ]);
     }
@@ -36,7 +37,7 @@ class ServiceController extends Controller
         $data = $this->validated($request);
 
         $service = Service::query()->create($data);
-        $service->staff()->sync($request->input('staff_ids', []));
+        $service->staff()->sync($this->staffIds($request));
 
         return back()->with('status', 'خدمت جدید اضافه شد.');
     }
@@ -47,7 +48,7 @@ class ServiceController extends Controller
 
         $model = Service::query()->findOrFail((int) $request->route('service'));
         $model->update($this->validated($request));
-        $model->staff()->sync($request->input('staff_ids', []));
+        $model->staff()->sync($this->staffIds($request));
 
         return back()->with('status', 'خدمت به‌روزرسانی شد.');
     }
@@ -75,6 +76,8 @@ class ServiceController extends Controller
      */
     private function validated(Request $request): array
     {
+        $tenantId = $this->context->requireTenant()->getKey();
+
         $data = $request->validate([
             'name' => ['required', 'string', 'max:120'],
             'duration_minutes' => ['required', 'integer', 'min:5', 'max:480'],
@@ -83,7 +86,12 @@ class ServiceController extends Controller
             'color' => ['nullable', 'regex:/^#[0-9a-fA-F]{6}$/'],
             'is_active' => ['nullable', 'boolean'],
             'staff_ids' => ['nullable', 'array'],
-            'staff_ids.*' => ['integer'],
+            // A staff id from another tenant must be rejected, not silently
+            // written into the shared staff_service pivot.
+            'staff_ids.*' => [
+                'integer',
+                Rule::exists('staff', 'id')->where('tenant_id', $tenantId),
+            ],
         ]);
 
         $data['buffer_minutes'] = (int) ($data['buffer_minutes'] ?? 0);
@@ -93,5 +101,20 @@ class ServiceController extends Controller
         unset($data['staff_ids']);
 
         return $data;
+    }
+
+    /**
+     * Defence in depth: even if validation is bypassed, only staff rows
+     * visible in the current tenant context can be attached.
+     *
+     * @return array<int, int>
+     */
+    private function staffIds(Request $request): array
+    {
+        return Staff::query()
+            ->whereIn('id', array_map('intval', (array) $request->input('staff_ids', [])))
+            ->pluck('id')
+            ->map(fn ($id): int => (int) $id)
+            ->all();
     }
 }

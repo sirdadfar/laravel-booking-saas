@@ -3,17 +3,17 @@
     $selectedServices = old('service_ids', $member?->services->pluck('id')->all() ?? []);
 @endphp
 
-<div class="grid-2">
+<div class="field-grid">
     <div class="field">
         <label for="staff-name-{{ $uid }}">نام</label>
-        <input type="text" id="staff-name-{{ $uid }}" name="name"
+        <input type="text" id="staff-name-{{ $uid }}" name="name" class="input"
                value="{{ old('name', $member?->name) }}" required maxlength="120">
     </div>
 
     <div class="field">
         <label for="staff-phone-{{ $uid }}">شمارهٔ همراه (اختیاری)</label>
-        <input type="tel" id="staff-phone-{{ $uid }}" name="phone" dir="ltr"
-               value="{{ old('phone', $member?->phone) }}" placeholder="09121234567">
+        <input type="tel" id="staff-phone-{{ $uid }}" name="phone" class="input" dir="ltr"
+               value="{{ old('phone', $member?->phone) }}" placeholder="09121234567" inputmode="tel">
     </div>
 </div>
 
@@ -41,7 +41,7 @@
 <fieldset class="fieldset">
     <legend>ساعات کاری هفتگی</legend>
 
-    <div class="shifts-grid">
+    <div class="field-grid">
         @foreach (\App\Support\IranianWeek::LABELS as $weekday => $label)
             @php
                 $value = $member?->schedules
@@ -55,12 +55,17 @@
                 <input type="text"
                        id="shift-{{ $uid }}-{{ $weekday }}"
                        name="shifts[{{ $weekday }}]"
+                       class="input"
                        dir="ltr"
                        placeholder="09:00-13:00, 16:00-20:00"
+                       aria-describedby="shifts-hint-{{ $uid }}"
                        value="{{ old('shifts.'.$weekday, $value) }}">
             </div>
         @endforeach
     </div>
 
-    <p class="muted small">خانه‌گذاشتن یک روز یعنی تعطیل بودن آن روز.</p>
+    <p class="field__hint" id="shifts-hint-{{ $uid }}">
+        خانه‌گذاشتن یک روز یعنی تعطیل بودن آن روز. چند بازه را با کاما جدا کنید:
+        <code dir="ltr">09:00-13:00, 16:00-20:00</code>
+    </p>
 </fieldset>

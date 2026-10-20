@@ -4,7 +4,9 @@ use App\Exceptions\BookingRuleException;
 use App\Exceptions\SlotUnavailableException;
 use App\Http\Middleware\EnsurePlatformAdmin;
 use App\Http\Middleware\EnsureTenantAdmin;
+use App\Http\Middleware\ResetTenantContext;
 use App\Http\Middleware\ResolveTenant;
+use App\Http\Middleware\SecurityHeaders;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -17,6 +19,11 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware) {
+        $middleware->prepend(ResetTenantContext::class);
+        $middleware->web(append: [
+            SecurityHeaders::class,
+        ]);
+
         $middleware->alias([
             'tenant' => ResolveTenant::class,
             'tenant.admin' => EnsureTenantAdmin::class,

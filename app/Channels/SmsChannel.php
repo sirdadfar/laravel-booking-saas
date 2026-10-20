@@ -39,5 +39,10 @@ class SmsChannel
             $message,
             PHP_EOL,
         ));
+
+        // The log contains a phone number by definition of this dev driver.
+        // Keep it private to the process owner; production should replace the
+        // channel or point SMS_LOG_PATH at a protected, rotated volume.
+        @chmod($path, 0600);
     }
 }

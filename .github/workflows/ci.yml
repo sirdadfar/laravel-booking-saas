@@ -47,8 +47,14 @@ jobs:
         run: vendor/bin/pint --test
 
       - name: Security audit
-        continue-on-error: true
         run: composer audit --locked --format=plain
+
+      - name: Check view and config caching
+        run: |
+          php artisan view:cache
+          php artisan view:clear
+          php artisan config:cache
+          php artisan config:clear
 
       - name: Run tests
         run: php artisan test
