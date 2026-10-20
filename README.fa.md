@@ -3,7 +3,7 @@
 <p align="center">
   <img alt="CI" src="https://github.com/sirdadfar/laravel-booking-saas/actions/workflows/ci.yml/badge.svg">
   <img alt="PHP" src="https://img.shields.io/badge/PHP-8.2%2B-777bb4">
-  <img alt="Laravel" src="https://img.shields.io/badge/Laravel-11-ff2d20">
+  <img alt="Laravel" src="https://img.shields.io/badge/Laravel-12-ff2d20">
   <img alt="License" src="https://img.shields.io/badge/license-MIT-green">
 </p>
 
@@ -100,7 +100,7 @@ php artisan serve
 - جلوگیری از رزرو همزمان با تراکنش + `lockForUpdate` و بازبینی دوباره پس از قفل؛
 - ذخیرهٔ همهٔ زمان‌ها به UTC و محاسبه در منطقهٔ زمانی هر مستأجر؛
 - پیامک تأیید از طریق کانال Notification لاراول با درایور لاگ محلی؛
-- ۷۳ تست و ۱۹۳ assertion، همراه با Pint و CI.
+- ۸۶ تست و ۲۱۹ assertion، همراه با Pint و CI.
 
 ## ۴. موتور زمان‌های آزاد
 
@@ -157,7 +157,7 @@ app/
 ## ۶. تست و کیفیت
 
 ```bash
-php artisan test          # ۷۳ تست
+php artisan test          # ۸۶ تست
 vendor/bin/pint --test    # بررسی سبک کد
 ```
 
@@ -173,6 +173,8 @@ vendor/bin/pint --test    # بررسی سبک کد
 | `TenantResolutionHttpTest` | مسیر، هدر، زیردامنه، اولویت مسیر بر هدر |
 | `RateLimitTest` | محدودیت نرخ ثبت نوبت |
 | `SmsChannelTest` | نوشتن پیام تأیید در لاگ پیامک |
+| `PhoneTest` (واحد) | نرمال‌سازی ارقام فارسی/عربی و اعتبار شمارهٔ همراه |
+| `IranianWeekTest` (واحد) | شنبه = ۰، برچسب روزها، شروع هفته |
 
 CI در `.github/workflows/ci.yml` روی PHP 8.2، 8.3 و 8.4 اجرا می‌شود: نصب وابستگی‌ها،
 ساخت `APP_KEY`، `pint --test` و `php artisan test`.
@@ -235,7 +237,20 @@ CI در `.github/workflows/ci.yml` روی PHP 8.2، 8.3 و 8.4 اجرا می‌�
 - [ ] API با توکن (Sanctum) برای اپ موبایل
 - [ ] تست بار روی ثبت همزمان نوبت با MySQL
 
-## ۱۰. مجوز
+## ۱۰. امنیت
+
+- وابستگی‌ها روی نسخه‌های وصله‌شده قفل شده‌اند و `composer audit` هیچ ادوایزری گزارش نمی‌کند.
+- این پروژه روی Laravel 12.70 اجرا می‌شود تا وصلهٔ **CVE-2026-48019**
+  (`GHSA-5vg9-5847-vvmq`، شدت High — تزریق CRLF در قاعدهٔ پیش‌فرض اعتبارسنجی `email`) را
+  بگیرد. برای خط ۱۱ هیچ نسخهٔ وصله‌شده‌ای منتشر نشد؛ ماندن روی آن یعنی انتشار یک آسیب‌پذیری
+  شناخته‌شده. ابزار فرمت‌کننده (Pint) روی 1.30.4 — آخرین نسخهٔ سازگار با PHP 8.2 — قفل شده تا
+  PHP 8.2 هم در CI بماند، ولی خودِ فریم‌ورک به‌روز است.
+- جداسازی مستأجر و کنترل دسترسی تست دارند: کوئری fail-closed، `tenant_id` تغییرناپذیر،
+  ۴۰۳ برای دسترسی بین‌مستأجری و ۴۰۴ برای رکوردی که به مستأجر دیگری تعلق دارد.
+- رمزها فقط در `.env` هستند (در `.gitignore`)؛ `.env.example` فقط جای‌نگهدار دارد.
+- مسیرهای نوشتن عمومی محدودیت نرخ دارند.
+
+## ۱۱. مجوز
 
 MIT — فایل [`LICENSE`](LICENSE).
 

@@ -3,7 +3,7 @@
 <p align="center">
   <img alt="CI" src="https://github.com/sirdadfar/laravel-booking-saas/actions/workflows/ci.yml/badge.svg">
   <img alt="PHP" src="https://img.shields.io/badge/PHP-8.2%2B-777bb4">
-  <img alt="Laravel" src="https://img.shields.io/badge/Laravel-11-ff2d20">
+  <img alt="Laravel" src="https://img.shields.io/badge/Laravel-12-ff2d20">
   <img alt="License" src="https://img.shields.io/badge/license-MIT-green">
 </p>
 
@@ -89,7 +89,7 @@ Demo accounts (password `password`): `admin@rose.test`, `admin@mehr.test`,
 - double-booking prevention with a transaction, `lockForUpdate`, and a re-check after locking;
 - UTC storage, per-tenant timezone computation;
 - SMS confirmation through Laravel's notification pipeline with a local log driver;
-- 73 tests / 193 assertions, Pint style check, GitHub Actions on PHP 8.2–8.4.
+- 86 tests / 219 assertions, Pint style check, GitHub Actions on PHP 8.2–8.4.
 
 ## 4. Availability rules
 
@@ -136,7 +136,7 @@ When none of the three resolves, the landing page is shown.
 ## 6. Tests
 
 ```bash
-php artisan test          # 73 tests
+php artisan test          # 86 tests
 vendor/bin/pint --test    # style
 ```
 
@@ -190,6 +190,19 @@ subdomain resolution, rate limiting and the SMS driver.
 - [ ] Sanctum API for a mobile client
 - [ ] concurrent booking load test on MySQL
 
-## 11. License
+## 11. Security
+
+- Dependencies are pinned to patched releases; `composer audit` reports **no advisories**.
+- The project runs on Laravel 12.70 to pick up the fix for **CVE-2026-48019**
+  (`GHSA-5vg9-5847-vvmq`, High — CRLF injection in the default `email` validation rule). The
+  11.x line never received a patch, so staying there would have meant shipping a known High
+  advisory. Pinning the dev-only formatter to Pint 1.30.4 keeps PHP 8.2 in the CI matrix while
+  the framework itself is current.
+- Tenant isolation and authorization are covered by tests: fail-closed queries, immutable
+  `tenant_id`, cross-tenant `403`s, and `404`s for records that belong to another tenant.
+- Secrets live only in `.env`, which is git-ignored; `.env.example` holds placeholders.
+- Public write endpoints are rate limited.
+
+## 12. License
 
 MIT — see [`LICENSE`](LICENSE). Author: [sirdadfar](https://github.com/sirdadfar).

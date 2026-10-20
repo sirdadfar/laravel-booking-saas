@@ -2,19 +2,17 @@
     "$schema": "https://getcomposer.org/schema.json",
     "name": "sirdadfar/nobatyar-booking-saas",
     "type": "project",
-    "description": "Multi-tenant appointment booking SaaS for salons and clinics, built with Laravel 11 (Persian/RTL UI, timezone-aware availability engine).",
+    "description": "Multi-tenant appointment booking SaaS for salons and clinics, built with Laravel 12 (Persian/RTL UI, timezone-aware availability engine).",
     "keywords": ["laravel", "booking", "appointments", "multi-tenant", "saas", "persian", "rtl"],
     "license": "MIT",
     "require": {
         "php": "^8.2",
-        "laravel/framework": "^11.31",
+        "laravel/framework": "^12.60",
         "laravel/tinker": "^2.9"
     },
     "require-dev": {
         "fakerphp/faker": "^1.23",
-        "laravel/pail": "^1.1",
-        "laravel/pint": "^1.13",
-        "laravel/sail": "^1.26",
+        "laravel/pint": "1.30.4",
         "mockery/mockery": "^1.6",
         "nunomaduro/collision": "^8.1",
         "phpunit/phpunit": "^11.0.1"
@@ -47,9 +45,14 @@
             "@php -r \"file_exists('database/database.sqlite') || touch('database/database.sqlite');\"",
             "@php artisan migrate --graceful --ansi"
         ],
-        "dev": [
-            "Composer\\Config::disableProcessTimeout",
-            "npx concurrently -c \"#93c5fd,#c4b5fd,#fb7185,#fdba74\" \"php artisan serve\" \"php artisan queue:listen --tries=1\" \"php artisan pail --timeout=0\" \"npm run dev\" --names=server,queue,logs,vite"
+        "test": [
+            "@php artisan test"
+        ],
+        "lint": [
+            "vendor/bin/pint"
+        ],
+        "lint:check": [
+            "vendor/bin/pint --test"
         ]
     },
     "extra": {
